@@ -93,3 +93,43 @@ export type Category = {
   created_at: string;
   updated_at: string;
 };
+
+// Tipo para a tabela contents
+export type Content = {
+  id: string;
+  nome: string;
+  slug: string;
+  tipo: 'FILME' | 'SERIE';
+  categoria_principal: string;
+  subcategoria: string | null;
+  poster_url: string | null;
+  video_url: string;
+  banner_url: string | null;
+  sinopse: string | null;
+  ano: number | null;
+  duracao: number | null; // em minutos
+  avaliacao: number | null;
+  elenco: string[] | null; // JSONB array
+  diretor: string | null;
+  generos: string[] | null; // JSONB array
+  destaque: boolean;
+  // Campos específicos para séries
+  temporada: string | null;
+  episodio: string | null;
+  nome_serie: string | null;
+  // Metadados TMDB
+  tmdb_id: number | null;
+  tmdb_data: any | null; // JSONB
+  // Controle
+  created_at: string;
+  updated_at: string;
+  synced_with_tmdb: boolean;
+};
+
+// Tipo para a tabela watchlist
+export type Watchlist = {
+  id: string;
+  user_id: string;
+  content_id: string;
+  added_at: string;
+};

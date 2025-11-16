@@ -1,17 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
-
-interface ContentItem {
-  id: string;
-  title: string;
-  thumbnail: string;
-  type: 'movie' | 'series';
-}
+import { useRouter } from 'next/navigation';
+import { Content } from '@/lib/supabase';
 
 interface ContentRowProps {
   title: string;
-  items: ContentItem[];
+  items: Content[];
 }
 
 export default function ContentRow({ title, items }: ContentRowProps) {
@@ -30,19 +25,26 @@ export default function ContentRow({ title, items }: ContentRowProps) {
   );
 }
 
-function ContentCard({ item, index }: { item: ContentItem; index: number }) {
+function ContentCard({ item, index }: { item: Content; index: number }) {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/content/${item.slug}`);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
       whileTap={{ scale: 0.95 }}
-      className="relative flex-shrink-0 w-40 snap-start"
+      onClick={handleClick}
+      className="relative flex-shrink-0 w-40 snap-start cursor-pointer"
     >
       <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
         <img
-          src={item.thumbnail}
-          alt={item.title}
+          src={item.poster_url || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400'}
+          alt={item.nome}
           className="w-full h-full object-cover"
         />
 
@@ -52,13 +54,13 @@ function ContentCard({ item, index }: { item: ContentItem; index: number }) {
         {/* Title */}
         <div className="absolute bottom-0 left-0 right-0 p-3">
           <h3 className="text-white font-semibold text-xs line-clamp-2 leading-tight">
-            {item.title}
+            {item.nome}
           </h3>
         </div>
 
         {/* Type badge */}
         <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md glass-effect text-[10px] font-semibold">
-          {item.type === 'movie' ? 'Filme' : 'Série'}
+          {item.tipo === 'FILME' ? 'Filme' : 'Série'}
         </div>
       </div>
     </motion.div>

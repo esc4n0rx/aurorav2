@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Adam Sandler",
+    "character": "Lenny Feder",
+    "profile_path": "https://image.tmdb.org/t/p/w185/gLkLCsQdwDDPabRhKPB25nGtKwS.jpg"
+  },
+  {
+    "name": "Kevin James",
+    "character": "Eric Lamonsoff",
+    "profile_path": "https://image.tmdb.org/t/p/w185/3WPW5duZyQcjveefxwLULgIyhM0.jpg"
+  },
+  {
+    "name": "Chris Rock",
+    "character": "Kurt McKenzie",
+    "profile_path": "https://image.tmdb.org/t/p/w185/cqI8yQ00GNDV3PAAz5UeLj7vOX0.jpg"
+  },
+  {
+    "name": "David Spade",
+    "character": "Marcus Higgins",
+    "profile_path": "https://image.tmdb.org/t/p/w185/8tv638lAMLmYh8bSLICqPzbW3tv.jpg"
+  },
+  {
+    "name": "Rob Schneider",
+    "character": "Rob Hilliard",
+    "profile_path": "https://image.tmdb.org/t/p/w185/kVHNFDOGDrC3LjDyYf5RaCd6auK.jpg"
+  },
+  {
+    "name": "Salma Hayek Pinault",
+    "character": "Roxanne Chase-Feder",
+    "profile_path": "https://image.tmdb.org/t/p/w185/1qfYF7NGRObmeKR7IVXUFVIC0CN.jpg"
+  },
+  {
+    "name": "Maria Bello",
+    "character": "Sally Lamonsoff",
+    "profile_path": "https://image.tmdb.org/t/p/w185/it1f5mxiGIWO0DzTBfwtLTjphZb.jpg"
+  },
+  {
+    "name": "Maya Rudolph",
+    "character": "Deanne McKenzie",
+    "profile_path": "https://image.tmdb.org/t/p/w185/9QTtEfAmQOQcGhD12zzxdouLRh4.jpg"
+  },
+  {
+    "name": "Joyce Van Patten",
+    "character": "Gloria",
+    "profile_path": "https://image.tmdb.org/t/p/w185/vbt3LzgBiQ7UhL5tDwn1wV4ndBd.jpg"
+  },
+  {
+    "name": "Ebony Jo-Ann",
+    "character": "Mama Ronzoni",
+    "profile_path": "https://image.tmdb.org/t/p/w185/vHiSk4Gl6H30AtBa0gCXDn1j1kK.jpg"
+  }
+]
