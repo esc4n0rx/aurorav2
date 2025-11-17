@@ -3,12 +3,12 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Home, Compass, Grid3x3, Bookmark, User } from 'lucide-react';
+import { Home, Compass, Search, Bookmark, User } from 'lucide-react';
 
 const navItems = [
   { id: 'home', label: 'Início', icon: Home, href: '/home' },
   { id: 'discover', label: 'Descobrir', icon: Compass, href: '/discover' },
-  { id: 'categories', label: 'Categorias', icon: Grid3x3, href: '/categories' },
+  { id: 'search', label: 'Buscar', icon: Search, href: '/search' },
   { id: 'watchlist', label: 'Minha Lista', icon: Bookmark, href: '/watchlist' },
   { id: 'profile', label: 'Perfil', icon: User, href: '/profile' },
 ];

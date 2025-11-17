@@ -267,14 +267,70 @@ export default function ContentDetailPage() {
               <span className="text-sm text-gray-400 w-20">Elenco:</span>
               <span className="text-sm flex-1">
                 {Array.isArray(content.elenco)
-                  ? content.elenco.join(', ')
+                  ? content.elenco
+                      .map((cast: any) =>
+                        typeof cast === 'object' && cast.name
+                          ? cast.name
+                          : typeof cast === 'string'
+                          ? cast
+                          : ''
+                      )
+                      .filter(Boolean)
+                      .slice(0, 5)
+                      .join(', ')
                   : typeof content.elenco === 'string'
                   ? content.elenco
-                  : JSON.stringify(content.elenco)}
+                  : ''}
               </span>
             </div>
           )}
         </motion.div>
+
+        {/* Seção de Elenco com fotos */}
+        {content.elenco && content.elenco.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.45 }}
+            className="mb-6"
+          >
+            <h2 className="text-lg font-semibold mb-3">Elenco</h2>
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+              {content.elenco.slice(0, 10).map((cast: any, index: number) => {
+                // Suportar tanto objetos quanto strings
+                const castName = typeof cast === 'object' && cast.name ? cast.name : cast;
+                const castCharacter = typeof cast === 'object' && cast.character ? cast.character : null;
+                const castPhoto = typeof cast === 'object' && cast.profile_path ? cast.profile_path : null;
+
+                return (
+                  <div key={index} className="flex-shrink-0 w-24">
+                    <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-800 mb-2">
+                      {castPhoto ? (
+                        <img
+                          src={castPhoto}
+                          alt={castName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-bold">
+                          {castName?.charAt(0) || '?'}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs font-semibold text-center line-clamp-2 leading-tight mb-1">
+                      {castName}
+                    </p>
+                    {castCharacter && (
+                      <p className="text-[10px] text-gray-400 text-center line-clamp-1">
+                        {castCharacter}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
 
         {/* Seção de Episódios (apenas para séries) */}
         {content.tipo === 'SERIE' && availableSeasons.length > 0 && (
