@@ -33,7 +33,7 @@ export default function PlayerPage() {
   const [volume, setVolume] = useState(1);
   const [slug, setSlug] = useState<string>('');
 
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const controlsTimeoutRef = useRef<number>();
 
   useEffect(() => {
     // Resolver params
