@@ -48,9 +48,7 @@ export default function InfiniteContentGrid({ tipo, genero }: InfiniteContentGri
         setContents((prev) => {
           const newContents = pageNum === 1 ? data.contents : [...prev, ...data.contents];
           // Remove duplicatas baseado em ID
-          const uniqueContents = Array.from(
-            new Map(newContents.map((item: Content) => [item.id, item])).values()
-          );
+          const uniqueContents: Content[] = [...new Map<string, Content>(newContents.map((item: Content) => [item.id, item])).values()];
           return uniqueContents;
         });
         setHasMore(data.pagination?.hasMore || false);

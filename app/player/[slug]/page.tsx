@@ -33,7 +33,7 @@ export default function PlayerPage() {
   const [volume, setVolume] = useState(1);
   const [slug, setSlug] = useState<string>('');
 
-  const controlsTimeoutRef = useRef<number>();
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     // Resolver params
@@ -41,7 +41,9 @@ export default function PlayerPage() {
       const resolvedSlug = Array.isArray(params.slug)
         ? params.slug[0]
         : params.slug;
-      setSlug(resolvedSlug);
+      if (resolvedSlug) {
+        setSlug(resolvedSlug);
+      }
     };
 
     resolveParams();
