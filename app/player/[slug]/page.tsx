@@ -38,7 +38,9 @@ export default function PlayerPage() {
   useEffect(() => {
     // Resolver params
     const resolveParams = async () => {
-      const resolvedSlug = params.slug as string;
+      const resolvedSlug = Array.isArray(params.slug)
+        ? params.slug[0]
+        : params.slug;
       setSlug(resolvedSlug);
     };
 
