@@ -32,19 +32,33 @@ export async function GET(request: Request) {
       query = query.eq('tipo', tipo);
     }
 
-    // Filtrar por gênero se fornecido
-    if (genero) {
-      // Usar contains para buscar em array JSONB
-      query = query.contains('generos', [genero]);
-    }
-
     // Ordenar por data de criação (mais recentes primeiro)
     query = query.order('created_at', { ascending: false });
 
-    // Paginação
-    query = query.range(offset, offset + limit - 1);
+    // Se tem filtro de gênero, buscar mais registros para filtrar depois
+    // (filtro de array JSONB com caracteres especiais não funciona bem no Supabase)
+    if (genero) {
+      query = query.limit(1000); // Buscar mais para filtrar
+    } else {
+      // Paginação normal
+      query = query.range(offset, offset + limit - 1);
+    }
 
-    const { data, error, count } = await query;
+    let { data, error, count } = await query;
+
+    // Filtrar por gênero no código (mais seguro com caracteres especiais)
+    if (genero && data) {
+      data = data.filter((item: any) =>
+        item.generos &&
+        Array.isArray(item.generos) &&
+        item.generos.some((g: string) => g.toLowerCase() === genero.toLowerCase())
+      );
+      // Aplicar paginação manualmente
+      const start = offset;
+      const end = offset + limit;
+      count = data.length;
+      data = data.slice(start, end);
+    }
 
     if (error) {
       console.error('Erro ao buscar conteúdos:', error);

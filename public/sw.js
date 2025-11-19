@@ -1,7 +1,7 @@
 // ============================================
 // AURORA PWA - Service Worker com Versionamento
 // ============================================
-const APP_VERSION = '1.0.5';
+const APP_VERSION = '1.0.6';
 // ============================================
 
 const CACHE_NAME = `aurora-cache-v${APP_VERSION}`;
