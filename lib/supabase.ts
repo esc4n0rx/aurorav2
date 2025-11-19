@@ -152,3 +152,24 @@ export type WatchHistory = {
 export type WatchHistoryWithContent = WatchHistory & {
   content: Content;
 };
+
+// Tipo para solicitações de conteúdo
+export type ContentRequest = {
+  id: string;
+  user_id: string;
+  content_name: string;
+  content_type: 'filme' | 'serie';
+  source_info: string | null;
+  status: 'pendente' | 'concluido' | 'rejeitado';
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// Tipo para estatísticas do usuário
+export type UserStats = {
+  movies_watched: number;
+  series_watched: number;
+  total_hours: number;
+  saved_content: number;
+};
