@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { LogIn } from 'lucide-react';
+import PWAInstaller from '@/components/PWAInstaller';
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle } = useAuth();
@@ -41,6 +42,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-black">
+      <PWAInstaller />
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-blue-900/20" />
 
