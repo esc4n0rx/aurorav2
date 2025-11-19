@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import PWAInstaller from "@/components/PWAInstaller";
+import PWAUpdateNotifier from "@/components/PWAUpdateNotifier";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({
@@ -47,7 +48,10 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans antialiased bg-black text-white`}>
         <PWAInstaller />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <PWAUpdateNotifier />
+        </AuthProvider>
         <Toaster
           position="top-center"
           toastOptions={{

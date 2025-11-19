@@ -5,7 +5,10 @@ import { motion } from 'framer-motion';
 import { Share2, Download, MoreVertical, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button'; // Assuming you have a Button component
 
+const STORAGE_KEY = 'aurora_pwa_installed';
+
 const PWAInstaller = () => {
+  const [isChecking, setIsChecking] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -13,28 +16,53 @@ const PWAInstaller = () => {
   const deferredPrompt = useRef<any>(null); // Use useRef for mutable object like deferredPrompt
 
   useEffect(() => {
+    // Verificar se já foi instalado antes
+    const wasInstalled = localStorage.getItem(STORAGE_KEY) === 'true';
+
     const userAgent = navigator.userAgent;
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
     setIsMobile(isMobileDevice);
 
-    if (isMobileDevice) {
-      const isStandalonePWA = window.matchMedia('(display-mode: standalone)').matches;
-      setIsStandalone(isStandalonePWA);
+    // Verificar se está rodando como standalone (PWA instalado)
+    const isStandalonePWA = window.matchMedia('(display-mode: standalone)').matches ||
+                           (window.navigator as any).standalone === true ||
+                           wasInstalled;
+
+    setIsStandalone(isStandalonePWA);
+
+    if (isStandalonePWA) {
+      localStorage.setItem(STORAGE_KEY, 'true');
+    }
+
+    if (isMobileDevice && !isStandalonePWA) {
       setIsIOS(/iPhone|iPad|iPod/i.test(userAgent));
 
       // Listen for beforeinstallprompt event
-      window.addEventListener('beforeinstallprompt', (e) => {
+      const handleBeforeInstall = (e: Event) => {
         e.preventDefault();
         deferredPrompt.current = e;
         setShowInstallPrompt(true);
-      });
+      };
 
       // Listen for appinstalled event
-      window.addEventListener('appinstalled', () => {
+      const handleAppInstalled = () => {
         setShowInstallPrompt(false);
-        setIsStandalone(true); // Treat as standalone once installed
-      });
+        setIsStandalone(true);
+        localStorage.setItem(STORAGE_KEY, 'true');
+      };
+
+      window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.addEventListener('appinstalled', handleAppInstalled);
+
+      // Cleanup
+      setIsChecking(false);
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+        window.removeEventListener('appinstalled', handleAppInstalled);
+      };
     }
+
+    setIsChecking(false);
   }, []);
 
   const handleInstallClick = () => {
@@ -51,6 +79,16 @@ const PWAInstaller = () => {
       });
     }
   };
+
+  // Não renderizar nada enquanto verifica o estado
+  if (isChecking) {
+    return null;
+  }
+
+  // Se já está instalado (standalone), não mostrar nada
+  if (isStandalone) {
+    return null;
+  }
 
   if (!isMobile) {
     return (

@@ -34,6 +34,53 @@ export const useAuth = () => {
   return context;
 };
 
+const STORAGE_KEY = 'aurora_user_cache';
+const SYNC_TIMEOUT = 10000; // 10 segundos de timeout
+
+// Função para salvar usuário no localStorage
+const saveUserToStorage = (user: User | null) => {
+  try {
+    if (user) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch (error) {
+    console.error('Erro ao salvar usuário no storage:', error);
+  }
+};
+
+// Função para recuperar usuário do localStorage
+const getUserFromStorage = (): User | null => {
+  try {
+    const cached = localStorage.getItem(STORAGE_KEY);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (error) {
+    console.error('Erro ao recuperar usuário do storage:', error);
+  }
+  return null;
+};
+
+// Função para fetch com timeout
+const fetchWithTimeout = async (url: string, options: RequestInit, timeout: number): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -41,9 +88,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const syncUserWithDatabase = async (firebaseUser: FirebaseUser) => {
+  const syncUserWithDatabase = async (firebaseUser: FirebaseUser): Promise<User | null> => {
     try {
-      const response = await fetch('/api/auth/sync-user', {
+      const response = await fetchWithTimeout('/api/auth/sync-user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           displayName: firebaseUser.displayName,
           photoUrl: firebaseUser.photoURL,
         }),
-      });
+      }, SYNC_TIMEOUT);
 
       if (!response.ok) {
         throw new Error('Erro ao sincronizar usuário');
@@ -62,25 +109,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const { user: dbUser } = await response.json();
       setUser(dbUser);
+      saveUserToStorage(dbUser);
+      return dbUser;
     } catch (error) {
       console.error('Erro ao sincronizar usuário:', error);
+      // Se falhar o sync, tenta usar o cache local
+      const cachedUser = getUserFromStorage();
+      if (cachedUser) {
+        console.log('Usando usuário do cache local');
+        setUser(cachedUser);
+        return cachedUser;
+      }
+      return null;
     }
   };
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Timeout de segurança para evitar loading infinito
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('Auth timeout - usando cache local se disponível');
+        const cachedUser = getUserFromStorage();
+        if (cachedUser) {
+          setUser(cachedUser);
+        }
+        setLoading(false);
+      }
+    }, SYNC_TIMEOUT + 2000); // 12 segundos total
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!isMounted) return;
+
       setFirebaseUser(firebaseUser);
 
       if (firebaseUser) {
-        await syncUserWithDatabase(firebaseUser);
+        try {
+          await syncUserWithDatabase(firebaseUser);
+        } catch (error) {
+          console.error('Erro no sync:', error);
+          // Mesmo em erro, tenta usar cache
+          const cachedUser = getUserFromStorage();
+          if (cachedUser) {
+            setUser(cachedUser);
+          }
+        }
       } else {
         setUser(null);
+        saveUserToStorage(null);
       }
 
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimeout);
+      unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
@@ -101,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       await firebaseSignOut(auth);
       setUser(null);
       setFirebaseUser(null);
+      saveUserToStorage(null); // Limpa o cache local
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
       throw error;
