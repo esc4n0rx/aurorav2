@@ -140,7 +140,7 @@ export async function GET(request: Request) {
     });
 
     // Buscar histórico com dados do conteúdo (JOIN)
-    // Filtrar apenas conteúdos não completados e com progresso > 5%
+    // Filtrar apenas conteúdos não completados e com progresso > 0.5%
     const { data, error } = await supabase
       .from('watch_history')
       .select(`
@@ -149,7 +149,7 @@ export async function GET(request: Request) {
       `)
       .eq('user_id', user_id)
       .eq('completed', false)
-      .gt('progress_percent', 5)
+      .gt('progress_percent', 0.5)
       .order('last_watched_at', { ascending: false })
       .limit(limit);
 
