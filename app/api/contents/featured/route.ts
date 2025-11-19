@@ -19,7 +19,8 @@ export async function GET() {
       .from('contents')
       .select('*')
       .eq('destaque', true)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(20); // Limitar a 20 conteúdos em destaque
 
     if (error) {
       console.error('Erro ao buscar conteúdos em destaque:', error);
@@ -38,7 +39,10 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({ contents: data || [] });
+    const response = NextResponse.json({ contents: data || [] });
+    // Cache por 60 segundos
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+    return response;
   } catch (error) {
     console.error('Erro inesperado:', error);
     return NextResponse.json(

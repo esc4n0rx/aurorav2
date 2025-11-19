@@ -45,7 +45,10 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ contents: uniqueContents });
+    const response = NextResponse.json({ contents: uniqueContents });
+    // Cache por 60 segundos
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+    return response;
   } catch (error) {
     console.error('Erro inesperado:', error);
     return NextResponse.json(

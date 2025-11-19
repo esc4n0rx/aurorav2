@@ -28,73 +28,46 @@ export default function DiscoverPage() {
     }
   }, [user, loading, router]);
 
-  // Buscar gêneros
+  // Buscar conteúdos agrupados por gênero (otimizado - uma única chamada)
   useEffect(() => {
-    const fetchGenres = async () => {
+    const fetchContents = async () => {
+      if (selectedGenre) {
+        // Se um gênero específico está selecionado, não carrega os agrupados
+        setLoadingGenres(false);
+        setLoadingContents(false);
+        return;
+      }
+
+      setLoadingGenres(true);
+      setLoadingContents(true);
+
       try {
-        const params = new URLSearchParams();
+        const params = new URLSearchParams({ limit: '10' });
         if (selectedType) {
           params.append('tipo', selectedType);
         }
 
-        const response = await fetch(`/api/contents/genres?${params}`);
+        // Usar API otimizada que retorna tudo agrupado de uma vez
+        const response = await fetch(`/api/contents/discover/grouped?${params}`);
         const data = await response.json();
-        setGenres(data.generos || []);
-      } catch (error) {
-        console.error('Erro ao buscar gêneros:', error);
-      } finally {
-        setLoadingGenres(false);
-      }
-    };
 
-    if (user) {
-      fetchGenres();
-    }
-  }, [user, selectedType]);
-
-  // Buscar conteúdos agrupados por gênero (quando nenhum gênero específico está selecionado)
-  useEffect(() => {
-    const fetchContentsByGenre = async () => {
-      if (selectedGenre) return; // Não buscar se um gênero específico está selecionado
-
-      setLoadingContents(true);
-      try {
-        const contentsMap: Record<string, Content[]> = {};
-
-        // Buscar conteúdos para cada gênero
-        await Promise.all(
-          genres.slice(0, 10).map(async (genre) => {
-            const params = new URLSearchParams({
-              genero: genre,
-              limit: '10',
-              page: '1'
-            });
-
-            if (selectedType) {
-              params.append('tipo', selectedType);
-            }
-
-            const response = await fetch(`/api/contents/discover?${params}`);
-            const data = await response.json();
-
-            if (data.contents && data.contents.length > 0) {
-              contentsMap[genre] = data.contents;
-            }
-          })
-        );
-
-        setGenreContents(contentsMap);
+        setGenres(data.genres || []);
+        setGenreContents(data.genreContents || {});
       } catch (error) {
         console.error('Erro ao buscar conteúdos:', error);
       } finally {
+        setLoadingGenres(false);
         setLoadingContents(false);
       }
     };
 
-    if (user && genres.length > 0 && !selectedGenre) {
-      fetchContentsByGenre();
+    if (user) {
+      fetchContents();
+    } else if (!loading) {
+      setLoadingGenres(false);
+      setLoadingContents(false);
     }
-  }, [user, genres, selectedType, selectedGenre]);
+  }, [user, loading, selectedType, selectedGenre]);
 
   if (loading || !user) {
     return (

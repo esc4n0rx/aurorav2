@@ -20,12 +20,12 @@ export async function GET(request: Request) {
     });
 
     // Buscar conteúdos limitados (para performance)
-    // Como vamos exibir 10 gêneros com 10 itens cada, buscar no máximo 150 conteúdos
+    // Como vamos exibir 10 gêneros com 10 itens cada, buscar no máximo 100 conteúdos
     let query = supabase
       .from('contents')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(150);
+      .limit(100);
 
     if (tipo) {
       query = query.eq('tipo', tipo);
@@ -98,10 +98,13 @@ export async function GET(request: Request) {
       }
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       genreContents: filteredGenreContents,
       genres: sortedGenres
     });
+    // Cache por 60 segundos
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+    return response;
   } catch (error) {
     console.error('Erro inesperado:', error);
     return NextResponse.json(

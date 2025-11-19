@@ -133,3 +133,22 @@ export type Watchlist = {
   content_id: string;
   added_at: string;
 };
+
+// Tipo para a tabela watch_history
+export type WatchHistory = {
+  id: string;
+  user_id: string;
+  content_id: string;
+  current_t: number; // segundos
+  duration: number; // segundos
+  progress_percent: number; // 0-100
+  completed: boolean;
+  last_watched_at: string;
+  first_watched_at: string;
+  watch_count: number;
+};
+
+// Tipo para watch_history com dados do conteúdo (JOIN)
+export type WatchHistoryWithContent = WatchHistory & {
+  content: Content;
+};
