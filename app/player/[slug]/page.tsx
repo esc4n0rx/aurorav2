@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Content } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { getProxiedVideoUrl } from '@/lib/proxy';
 
 export default function PlayerPage() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function PlayerPage() {
 
   const [content, setContent] = useState<Content | null>(null);
   const [loading, setLoading] = useState(true);
+  const [videoUrl, setVideoUrl] = useState<string>('');
   const [showIntro, setShowIntro] = useState(true);
   const [introEnded, setIntroEnded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -67,6 +69,9 @@ export default function PlayerPage() {
 
         if (data.content) {
           setContent(data.content);
+          // Converter URL para proxy se for HTTP
+          const proxiedUrl = getProxiedVideoUrl(data.content.video_url);
+          setVideoUrl(proxiedUrl);
         }
       } catch (error) {
         console.error('Erro ao buscar conteúdo:', error);
@@ -421,10 +426,10 @@ export default function PlayerPage() {
       )}
 
       {/* Main Video */}
-      {!showIntro && (
+      {!showIntro && videoUrl && (
         <video
           ref={videoRef}
-          src={content.video_url}
+          src={videoUrl}
           className="w-full h-full object-contain"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
