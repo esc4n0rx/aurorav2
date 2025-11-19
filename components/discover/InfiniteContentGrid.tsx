@@ -35,7 +35,7 @@ export default function InfiniteContentGrid({ tipo, genero }: InfiniteContentGri
     try {
       const params = new URLSearchParams({
         page: pageNum.toString(),
-        limit: '20'
+        limit: '50'
       });
 
       if (tipo) params.append('tipo', tipo);

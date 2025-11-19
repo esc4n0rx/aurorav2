@@ -8,7 +8,8 @@ export async function GET(request: Request) {
     const tipo = searchParams.get('tipo'); // FILME ou SERIE (opcional)
     const genero = searchParams.get('genero'); // Gênero específico (opcional)
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    // Limite otimizado para paginação infinita
+    const limit = parseInt(searchParams.get('limit') || '50');
     const offset = (page - 1) * limit;
 
     // Criar cliente com service role para acesso total
@@ -74,15 +75,20 @@ export async function GET(request: Request) {
       processedData = Array.from(uniqueMap.values());
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       contents: processedData,
       pagination: {
         page,
         limit,
-        total: processedData.length,
-        hasMore: processedData.length === limit
+        total: count || processedData.length,
+        totalItems: processedData.length,
+        hasMore: (data?.length || 0) === limit
       }
     });
+
+    // Cache por 60 segundos
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+    return response;
   } catch (error) {
     console.error('Erro inesperado:', error);
     return NextResponse.json(
