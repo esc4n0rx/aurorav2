@@ -157,7 +157,7 @@ export default function PlayerPage() {
     if (currentVideoTime < 5 || videoDuration === 0) return;
 
     const payload = JSON.stringify({
-      user_id: user.uid,
+      user_id: user.id,
       content_id: content.id,
       current_t: currentVideoTime,
       duration: videoDuration,
@@ -192,7 +192,7 @@ export default function PlayerPage() {
 
       return () => clearInterval(interval);
     }
-  }, [showIntro, isPlaying, content?.id, user?.uid]);
+  }, [showIntro, isPlaying, content?.id, user?.id]);
 
   // Salvar progresso quando o usuário sair da página
   useEffect(() => {
@@ -215,7 +215,7 @@ export default function PlayerPage() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user?.uid, content?.id, showIntro]);
+  }, [user?.id, content?.id, showIntro]);
 
   // Auto-esconder controles
   useEffect(() => {

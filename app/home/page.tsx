@@ -27,11 +27,9 @@ export default function HomePage() {
     }
   }, [user, loading, router]);
 
-  // Buscar conteúdos das APIs
   useEffect(() => {
     const fetchContents = async () => {
       try {
-        // Buscar em paralelo para melhor performance
         const [featuredResponse, newReleasesResponse] = await Promise.all([
           fetch('/api/contents/featured'),
           fetch('/api/contents/new-releases'),
@@ -45,11 +43,10 @@ export default function HomePage() {
         setFeaturedContents(featuredData.contents || []);
         setNewReleases(newReleasesData.contents || []);
 
-        // Buscar histórico de forma não-bloqueante (pode falhar se tabela não existir)
-        if (user?.uid) {
+        if (user?.id) {
           try {
             const watchHistoryResponse = await fetch(
-              `/api/watch-history?user_id=${user.uid}&limit=10`
+              `/api/watch-history?user_id=${user.id}&limit=10`
             );
             if (watchHistoryResponse.ok) {
               const watchHistoryData = await watchHistoryResponse.json();
@@ -57,7 +54,6 @@ export default function HomePage() {
             }
           } catch (error) {
             console.warn('Erro ao buscar histórico (ignorado):', error);
-            // Ignora erro - funcionalidade opcional
           }
         }
       } catch (error) {
@@ -70,12 +66,10 @@ export default function HomePage() {
     if (user) {
       fetchContents();
     } else if (!loading) {
-      // Se não há usuário e não está carregando auth, para de carregar conteúdos
       setLoadingContents(false);
     }
   }, [user, loading]);
 
-  // Rotacionar banner a cada 5 segundos
   useEffect(() => {
     if (featuredContents.length > 0) {
       const interval = setInterval(() => {
@@ -106,22 +100,20 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
-      {/* Mobile Header */}
+
       <MobileHeader />
 
       <main className="page-transition">
-        {/* Hero Banner */}
+
         <HeroBanner content={featuredContents[currentBannerIndex] || null} />
 
-        {/* Category Cards */}
+
         <CategoryCards />
 
-        {/* Continue Watching */}
         {continueWatching.length > 0 && (
           <ContinueWatching items={continueWatching} />
         )}
 
-        {/* Content rows */}
         <div className="space-y-6 pb-4">
           {featuredContents.length > 0 && (
             <ContentRow title="Em Alta" items={featuredContents} />
@@ -132,7 +124,6 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Bottom Navigation */}
       <BottomNav />
     </div>
   );
