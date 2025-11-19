@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// GET - Buscar novidades (ordenado por created_at) com paginação
+// GET - Buscar novidades (ordenado por created_at)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = (page - 1) * limit;
+    // Limite máximo de conteúdos únicos a retornar
+    const maxResults = parseInt(searchParams.get('limit') || '500');
 
     // Criar cliente com service role para acesso total
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -20,11 +19,13 @@ export async function GET(request: Request) {
       }
     });
 
+    // Buscar mais registros para compensar agrupamento de séries
+    // Se temos muitos episódios, precisamos buscar mais para ter 500 únicos
     const { data, error, count } = await supabase
       .from('contents')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .limit(1000); // Buscar 1000 para garantir 500 únicos após agrupamento
 
     if (error) {
       console.error('Erro ao buscar novidades:', error);
@@ -39,6 +40,9 @@ export async function GET(request: Request) {
     const seenSeries = new Set();
 
     for (const content of data || []) {
+      // Parar se já temos o máximo de resultados
+      if (uniqueContents.length >= maxResults) break;
+
       if (content.tipo === 'SERIE') {
         const seriesKey = content.nome_serie || content.nome;
         if (!seenSeries.has(seriesKey)) {
@@ -52,12 +56,8 @@ export async function GET(request: Request) {
 
     const response = NextResponse.json({
       contents: uniqueContents,
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-        hasMore: (data?.length || 0) === limit
-      }
+      total: uniqueContents.length,
+      totalInDb: count || 0
     });
     // Cache por 30 segundos
     response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');

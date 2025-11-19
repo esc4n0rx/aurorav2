@@ -34,8 +34,8 @@ export async function GET(request: Request) {
 
     // Filtrar por gênero se fornecido
     if (genero) {
-      // Usar filter com operador @> para buscar em array JSONB
-      query = query.filter('generos', 'cs', `["${genero}"]`);
+      // Usar contains para buscar em array JSONB
+      query = query.contains('generos', [genero]);
     }
 
     // Ordenar por data de criação (mais recentes primeiro)

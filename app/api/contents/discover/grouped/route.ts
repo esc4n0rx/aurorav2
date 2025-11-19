@@ -19,87 +19,70 @@ export async function GET(request: Request) {
       }
     });
 
-    // Buscar conteúdos limitados (para performance)
-    // Como vamos exibir 10 gêneros com 10 itens cada, buscar no máximo 100 conteúdos
-    let query = supabase
+    // Primeiro buscar todos os gêneros únicos do banco
+    const { data: genreData, error: genreError } = await supabase
       .from('contents')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
+      .select('generos')
+      .not('generos', 'is', null);
 
-    if (tipo) {
-      query = query.eq('tipo', tipo);
+    if (genreError) {
+      console.error('Erro ao buscar gêneros:', genreError);
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Erro ao buscar conteúdos:', error);
-      return NextResponse.json(
-        { error: 'Erro ao buscar conteúdos', details: error.message },
-        { status: 500 }
-      );
-    }
-
-    if (!data || data.length === 0) {
-      return NextResponse.json({
-        genreContents: {},
-        genres: []
-      });
-    }
-
-    // Processar dados: remover duplicatas de séries e agrupar por gênero
-    const uniqueContents = new Map();
-    const genreContentsMap: Record<string, any[]> = {};
-    const genresSet = new Set<string>();
-
-    // Primeiro passo: remover duplicatas de séries
-    data.forEach((content) => {
-      if (content.tipo === 'SERIE') {
-        const serieKey = content.nome_serie || content.nome;
-        if (!uniqueContents.has(serieKey)) {
-          uniqueContents.set(serieKey, content);
-        }
-      } else {
-        uniqueContents.set(content.id, content);
-      }
-    });
-
-    // Segundo passo: agrupar por gênero
-    Array.from(uniqueContents.values()).forEach((content) => {
-      if (content.generos && Array.isArray(content.generos)) {
-        content.generos.forEach((genero: string) => {
-          if (genero) {
-            genresSet.add(genero);
-
-            if (!genreContentsMap[genero]) {
-              genreContentsMap[genero] = [];
-            }
-
-            // Limitar a N conteúdos por gênero
-            if (genreContentsMap[genero].length < limit) {
-              genreContentsMap[genero].push(content);
-            }
-          }
+    // Extrair gêneros únicos
+    const allGenres = new Set<string>();
+    genreData?.forEach((item: any) => {
+      if (item.generos && Array.isArray(item.generos)) {
+        item.generos.forEach((g: string) => {
+          if (g) allGenres.add(g);
         });
       }
     });
 
-    // Ordenar gêneros alfabeticamente
-    const sortedGenres = Array.from(genresSet).sort();
+    const sortedGenres = Array.from(allGenres).sort();
 
-    // Pegar apenas os primeiros 10 gêneros
-    const topGenres = sortedGenres.slice(0, 10);
-    const filteredGenreContents: Record<string, any[]> = {};
+    // Buscar conteúdos para cada gênero
+    const genreContentsMap: Record<string, any[]> = {};
 
-    topGenres.forEach((genre) => {
-      if (genreContentsMap[genre]) {
-        filteredGenreContents[genre] = genreContentsMap[genre];
+    // Buscar conteúdos em lotes por gênero para ter variedade
+    for (const genre of sortedGenres.slice(0, 15)) { // Top 15 gêneros
+      let genreQuery = supabase
+        .from('contents')
+        .select('*')
+        .contains('generos', [genre])
+        .order('created_at', { ascending: false })
+        .limit(50); // 50 por gênero para ter margem após deduplicação
+
+      if (tipo) {
+        genreQuery = genreQuery.eq('tipo', tipo);
       }
-    });
 
+      const { data: genreContents, error: gError } = await genreQuery;
+
+      if (!gError && genreContents && genreContents.length > 0) {
+        // Remover duplicatas de séries
+        const uniqueMap = new Map();
+        genreContents.forEach((content) => {
+          if (content.tipo === 'SERIE') {
+            const serieKey = content.nome_serie || content.nome;
+            if (!uniqueMap.has(serieKey)) {
+              uniqueMap.set(serieKey, content);
+            }
+          } else {
+            uniqueMap.set(content.id, content);
+          }
+        });
+
+        const uniqueContents = Array.from(uniqueMap.values()).slice(0, limit);
+        if (uniqueContents.length > 0) {
+          genreContentsMap[genre] = uniqueContents;
+        }
+      }
+    }
+
+    // Retornar resultado
     const response = NextResponse.json({
-      genreContents: filteredGenreContents,
+      genreContents: genreContentsMap,
       genres: sortedGenres
     });
     // Cache por 60 segundos
