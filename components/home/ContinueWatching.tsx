@@ -52,7 +52,7 @@ function ContinueWatchingCard({
     return `${minutes}m restantes`;
   };
 
-  const remainingSeconds = item.duration - item.current_time;
+  const remainingSeconds = item.duration - item.current_t;
 
   return (
     <motion.div
