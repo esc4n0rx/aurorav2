@@ -1,7 +1,7 @@
 // ============================================
 // AURORA PWA - Service Worker com Versionamento
 // ============================================
-const APP_VERSION = '1.0.6';
+const APP_VERSION = '1.1.6';
 // ============================================
 
 const CACHE_NAME = `aurora-cache-v${APP_VERSION}`;
@@ -51,8 +51,8 @@ self.addEventListener('activate', (event) => {
           cacheNames.map((cacheName) => {
             // Remove caches que não correspondem à versão atual
             if (cacheName.startsWith('aurora-') &&
-                cacheName !== STATIC_CACHE &&
-                cacheName !== DYNAMIC_CACHE) {
+              cacheName !== STATIC_CACHE &&
+              cacheName !== DYNAMIC_CACHE) {
               console.log(`[SW] Removendo cache antigo: ${cacheName}`);
               return caches.delete(cacheName);
             }
