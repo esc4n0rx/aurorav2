@@ -15,6 +15,7 @@ import {
   SkipForward,
   Settings,
   Loader2,
+  RotateCw,
 } from 'lucide-react';
 import { Content } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -283,6 +284,25 @@ export default function PlayerPage() {
     }
   };
 
+  const toggleRotation = async () => {
+    try {
+      if (screen.orientation && (screen.orientation as any).lock) {
+        if (screen.orientation.type.startsWith('portrait')) {
+          await (screen.orientation as any).lock('landscape');
+        } else {
+          await (screen.orientation as any).unlock();
+        }
+      } else {
+        // Fallback simples: tentar fullscreen se não estiver
+        if (!document.fullscreenElement) {
+          toggleFullscreen();
+        }
+      }
+    } catch (error) {
+      console.warn('Erro ao rotacionar:', error);
+    }
+  };
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       if (videoRef.current && (videoRef.current as any).webkitEnterFullscreen) {
@@ -291,7 +311,7 @@ export default function PlayerPage() {
       } else {
         // Standard
         document.documentElement.requestFullscreen();
-        // Tentar forçar landscape no Android
+        // Tentar forçar landscape no Android ao entrar em fullscreen
         if (screen.orientation && (screen.orientation as any).lock) {
           (screen.orientation as any).lock('landscape').catch((e: any) => {
             console.warn('Erro ao travar orientação:', e);
@@ -628,6 +648,14 @@ export default function PlayerPage() {
                 <div className="flex items-center gap-3">
                   <button className="p-2 rounded-lg bg-white/5 hover:bg-white/15 backdrop-blur-sm border border-white/10 text-white transition-all duration-200">
                     <Settings className="h-5 w-5" />
+                  </button>
+
+                  <button
+                    onClick={toggleRotation}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/15 backdrop-blur-sm border border-white/10 text-white transition-all duration-200"
+                    title="Girar Tela"
+                  >
+                    <RotateCw className="h-5 w-5" />
                   </button>
 
                   <button
