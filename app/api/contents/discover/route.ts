@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get('tipo'); // FILME ou SERIE (opcional)
     const genero = searchParams.get('genero'); // Gênero específico (opcional)
+    const generos = searchParams.get('generos'); // Múltiplos gêneros separados por vírgula (opcional)
     const page = parseInt(searchParams.get('page') || '1');
     // Limite otimizado para paginação infinita
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -37,7 +38,9 @@ export async function GET(request: Request) {
 
     // Se tem filtro de gênero, buscar mais registros para filtrar depois
     // (filtro de array JSONB com caracteres especiais não funciona bem no Supabase)
-    if (genero) {
+    // Se tem filtro de gênero (único ou múltiplo), buscar mais registros para filtrar depois
+    // (filtro de array JSONB com caracteres especiais não funciona bem no Supabase)
+    if (genero || generos) {
       query = query.limit(1000); // Buscar mais para filtrar
     } else {
       // Paginação normal
@@ -47,12 +50,25 @@ export async function GET(request: Request) {
     let { data, error, count } = await query;
 
     // Filtrar por gênero no código (mais seguro com caracteres especiais)
-    if (genero && data) {
-      data = data.filter((item: any) =>
-        item.generos &&
-        Array.isArray(item.generos) &&
-        item.generos.some((g: string) => g.toLowerCase() === genero.toLowerCase())
-      );
+    // Filtrar por gênero no código (mais seguro com caracteres especiais)
+    if ((genero || generos) && data) {
+      data = data.filter((item: any) => {
+        if (!item.generos || !Array.isArray(item.generos)) return false;
+
+        // Filtro único
+        if (genero) {
+          return item.generos.some((g: string) => g.toLowerCase() === genero.toLowerCase());
+        }
+
+        // Filtro múltiplo (OR logic - se tiver qualquer um dos gêneros)
+        if (generos) {
+          const genresList = generos.split(',').map(g => g.trim().toLowerCase());
+          return item.generos.some((g: string) => genresList.includes(g.toLowerCase()));
+        }
+
+        return false;
+      });
+
       // Aplicar paginação manualmente
       const start = offset;
       const end = offset + limit;

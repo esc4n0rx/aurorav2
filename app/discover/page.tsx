@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import MobileHeader from '@/components/home/MobileHeader';
 import BottomNav from '@/components/BottomNav';
@@ -15,9 +15,11 @@ import { Loader2 } from 'lucide-react';
 export default function DiscoverPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [genres, setGenres] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<'FILME' | 'SERIE' | null>(null);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [selectedGenres, setSelectedGenres] = useState<string | null>(null); // Para múltiplos gêneros via URL
   const [genreContents, setGenreContents] = useState<Record<string, Content[]>>({});
   const [loadingGenres, setLoadingGenres] = useState(true);
   const [loadingContents, setLoadingContents] = useState(false);
@@ -28,11 +30,29 @@ export default function DiscoverPage() {
     }
   }, [user, loading, router]);
 
+  // Ler query params da URL
+  useEffect(() => {
+    const generosParam = searchParams.get('generos');
+    const generoParam = searchParams.get('genero');
+
+    if (generosParam) {
+      setSelectedGenres(generosParam);
+      // Se tiver múltiplos gêneros, não selecionamos um único no filtro visual (ou poderíamos, mas é complexo)
+      setSelectedGenre(null);
+    } else if (generoParam) {
+      setSelectedGenre(generoParam);
+      setSelectedGenres(null);
+    } else {
+      setSelectedGenres(null);
+      // Manter selectedGenre se foi setado via UI
+    }
+  }, [searchParams]);
+
   // Buscar conteúdos agrupados por gênero (otimizado - uma única chamada)
   useEffect(() => {
     const fetchContents = async () => {
-      if (selectedGenre) {
-        // Se um gênero específico está selecionado, não carrega os agrupados
+      if (selectedGenre || selectedGenres) {
+        // Se um gênero específico ou lista de gêneros está selecionada, não carrega os agrupados
         setLoadingGenres(false);
         setLoadingContents(false);
         return;
@@ -67,7 +87,7 @@ export default function DiscoverPage() {
       setLoadingGenres(false);
       setLoadingContents(false);
     }
-  }, [user, loading, selectedType, selectedGenre]);
+  }, [user, loading, selectedType, selectedGenre, selectedGenres]);
 
   if (loading || !user) {
     return (
@@ -100,9 +120,13 @@ export default function DiscoverPage() {
 
         {/* Content */}
         <div className="mt-6">
-          {selectedGenre ? (
+          {selectedGenre || selectedGenres ? (
             // Infinite scroll grid quando um gênero específico está selecionado
-            <InfiniteContentGrid tipo={selectedType} genero={selectedGenre} />
+            <InfiniteContentGrid
+              tipo={selectedType}
+              genero={selectedGenre || undefined}
+              generos={selectedGenres || undefined}
+            />
           ) : (
             // Seções por gênero quando nenhum gênero específico está selecionado
             <>

@@ -77,10 +77,9 @@ export default function CategoryCards() {
   const router = useRouter();
 
   const handleCategoryClick = (category: typeof moodCategories[0]) => {
-    // Navegar para discover com o primeiro gênero da categoria
-    // O discover pode filtrar por múltiplos gêneros no futuro
-    const primaryGenre = category.genres[0];
-    router.push(`/discover?genero=${encodeURIComponent(primaryGenre)}`);
+    // Navegar para discover com múltiplos gêneros
+    const genresString = category.genres.join(',');
+    router.push(`/discover?generos=${encodeURIComponent(genresString)}`);
   };
 
   return (

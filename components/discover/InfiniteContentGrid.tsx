@@ -8,10 +8,11 @@ import { Loader2 } from 'lucide-react';
 
 interface InfiniteContentGridProps {
   tipo: 'FILME' | 'SERIE' | null;
-  genero: string;
+  genero?: string;
+  generos?: string; // Lista de gêneros separados por vírgula
 }
 
-export default function InfiniteContentGrid({ tipo, genero }: InfiniteContentGridProps) {
+export default function InfiniteContentGrid({ tipo, genero, generos }: InfiniteContentGridProps) {
   const router = useRouter();
   const [contents, setContents] = useState<Content[]>([]);
   const [page, setPage] = useState(1);
@@ -25,7 +26,7 @@ export default function InfiniteContentGrid({ tipo, genero }: InfiniteContentGri
     setPage(1);
     setHasMore(true);
     fetchContents(1);
-  }, [tipo, genero]);
+  }, [tipo, genero, generos]);
 
   // Fetch contents
   const fetchContents = async (pageNum: number) => {
@@ -40,6 +41,7 @@ export default function InfiniteContentGrid({ tipo, genero }: InfiniteContentGri
 
       if (tipo) params.append('tipo', tipo);
       if (genero) params.append('genero', genero);
+      if (generos) params.append('generos', generos);
 
       const response = await fetch(`/api/contents/discover?${params}`);
       const data = await response.json();
