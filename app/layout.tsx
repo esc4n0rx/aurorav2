@@ -45,6 +45,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" defer></script>
       </head>
       <body className={`${inter.variable} font-sans antialiased bg-black text-white`}>
         <PWAInstaller />

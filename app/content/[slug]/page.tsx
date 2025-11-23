@@ -7,6 +7,9 @@ import { ArrowLeft, Play, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Content } from '@/lib/supabase';
 import WatchlistButton from '@/components/WatchlistButton';
+import CastButton from '@/components/CastButton';
+import { useCast } from '@/hooks/useCast';
+import { getProxiedVideoUrl } from '@/lib/proxy';
 
 export default function ContentDetailPage() {
   const router = useRouter();
@@ -17,6 +20,8 @@ export default function ContentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [slug, setSlug] = useState<string>('');
   const [selectedSeason, setSelectedSeason] = useState<string>('1');
+
+  const { castMedia, isConnected } = useCast();
 
   useEffect(() => {
     // Resolver params
@@ -78,6 +83,52 @@ export default function ContentDetailPage() {
     router.push(`/player/${episodeSlug}`);
   };
 
+  const handleCast = () => {
+    if (!content) return;
+
+    let videoUrlToCast = '';
+    let title = content.nome;
+    let subtitle = '';
+    let imageUrl = content.poster_url || content.banner_url || '';
+
+    // Lógica para determinar qual vídeo castar (filme ou episódio)
+    if (content.tipo === 'SERIE' && episodes.length > 0) {
+      // Se for série, tenta pegar o primeiro episódio da temporada selecionada ou o primeiro geral
+      // Idealmente, deveria ser o episódio que o usuário clicou, mas o botão de cast está no header geral
+      // Então vamos assumir o primeiro episódio da lista atual (ou lógica de "continuar assistindo" se tivesse)
+      const episodeToCast = episodes.find(ep => ep.temporada === selectedSeason) || episodes[0];
+      if (episodeToCast) {
+        videoUrlToCast = episodeToCast.video_url;
+        title = episodeToCast.nome;
+        subtitle = `${content.nome} - S${episodeToCast.temporada}E${episodeToCast.episodio}`;
+        imageUrl = episodeToCast.poster_url || imageUrl;
+      }
+    } else {
+      videoUrlToCast = content.video_url;
+    }
+
+    if (videoUrlToCast) {
+      // Usar URL direta se possível, ou proxy se necessário (mas o user pediu direta se possível)
+      // O user disse: "acho que nao é necessario o proxy mais se for use , se nao passe a url direta"
+      // Vamos tentar passar a direta. Se o player nativo usa proxy, talvez o cast precise também se for m3u8 com CORS restrito.
+      // Mas vamos respeitar o pedido de "url direta".
+
+      // Se a URL não for HTTPS, o Cast pode rejeitar. O proxy garante HTTPS.
+      // Vamos verificar se é HTTPS.
+      let finalUrl = videoUrlToCast;
+      if (!finalUrl.startsWith('https://')) {
+        finalUrl = getProxiedVideoUrl(videoUrlToCast);
+      }
+
+      castMedia(finalUrl, {
+        title,
+        subtitle,
+        imageUrl,
+        contentType: 'video/mp4' // Ou application/x-mpegurl para HLS
+      });
+    }
+  };
+
   // Pegar temporadas únicas
   const getAvailableSeasons = () => {
     if (!episodes || episodes.length === 0) return [];
@@ -129,6 +180,8 @@ export default function ContentDetailPage() {
         >
           <ArrowLeft className="h-6 w-6" />
         </button>
+        <div className="flex-1" />
+        <CastButton onCast={handleCast} />
       </div>
 
       {/* Banner */}
@@ -268,19 +321,19 @@ export default function ContentDetailPage() {
               <span className="text-sm flex-1">
                 {Array.isArray(content.elenco)
                   ? content.elenco
-                      .map((cast: any) =>
-                        typeof cast === 'object' && cast.name
-                          ? cast.name
-                          : typeof cast === 'string'
+                    .map((cast: any) =>
+                      typeof cast === 'object' && cast.name
+                        ? cast.name
+                        : typeof cast === 'string'
                           ? cast
                           : ''
-                      )
-                      .filter(Boolean)
-                      .slice(0, 5)
-                      .join(', ')
+                    )
+                    .filter(Boolean)
+                    .slice(0, 5)
+                    .join(', ')
                   : typeof content.elenco === 'string'
-                  ? content.elenco
-                  : ''}
+                    ? content.elenco
+                    : ''}
               </span>
             </div>
           )}
@@ -348,11 +401,10 @@ export default function ContentDetailPage() {
                   <button
                     key={season}
                     onClick={() => setSelectedSeason(season!)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${
-                      selectedSeason === season
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${selectedSeason === season
                         ? 'bg-white text-black'
                         : 'bg-gray-800 text-white hover:bg-gray-700'
-                    }`}
+                      }`}
                   >
                     Temporada {season}
                   </button>
