@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import MobileHeader from '@/components/home/MobileHeader';
@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import { Content } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 
-export default function DiscoverPage() {
+function DiscoverContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -157,5 +157,17 @@ export default function DiscoverPage() {
       {/* Bottom Navigation */}
       <BottomNav />
     </div>
+  );
+}
+
+export default function DiscoverPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+      </div>
+    }>
+      <DiscoverContent />
+    </Suspense>
   );
 }
