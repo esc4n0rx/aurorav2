@@ -46,6 +46,48 @@ export default function PlayerPage() {
 
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  // Forçar modo paisagem ao abrir o player
+  useEffect(() => {
+    const lockLandscape = async () => {
+      try {
+        // Tentar travar em landscape
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape');
+        }
+      } catch (error) {
+        console.warn('Não foi possível travar orientação em landscape:', error);
+        // Fallback: tentar entrar em fullscreen que pode forçar landscape
+        try {
+          if (!document.fullscreenElement) {
+            await document.documentElement.requestFullscreen();
+            setIsFullscreen(true);
+          }
+        } catch (fsError) {
+          console.warn('Não foi possível entrar em fullscreen:', fsError);
+        }
+      }
+    };
+
+    // Aguardar um pequeno delay para garantir que o componente montou
+    const timer = setTimeout(lockLandscape, 300);
+
+    // Cleanup: destravar orientação ao sair do player
+    return () => {
+      clearTimeout(timer);
+      try {
+        if (screen.orientation && (screen.orientation as any).unlock) {
+          (screen.orientation as any).unlock();
+        }
+        // Sair do fullscreen se estiver ativo
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        }
+      } catch (error) {
+        console.warn('Erro ao destravar orientação:', error);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     // Resolver params
     const resolveParams = async () => {
@@ -660,7 +702,8 @@ export default function PlayerPage() {
 
                   <button
                     onClick={toggleFullscreen}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/15 backdrop-blur-sm border border-white/10 text-white transition-all duration-200"
+                    className="p-2.5 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white transition-all duration-200"
+                    title={isFullscreen ? "Sair do Fullscreen" : "Fullscreen"}
                   >
                     {isFullscreen ? (
                       <Minimize className="h-5 w-5" />

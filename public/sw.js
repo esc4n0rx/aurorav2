@@ -1,5 +1,5 @@
 
-const APP_VERSION = '1.1.3';
+const APP_VERSION = '1.1.4';
 
 const CACHE_NAME = `aurora-cache-v${APP_VERSION}`;
 const STATIC_CACHE = `aurora-static-v${APP_VERSION}`;
