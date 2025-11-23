@@ -285,10 +285,28 @@ export default function PlayerPage() {
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
+      if (videoRef.current && (videoRef.current as any).webkitEnterFullscreen) {
+        // iOS Safari
+        (videoRef.current as any).webkitEnterFullscreen();
+      } else {
+        // Standard
+        document.documentElement.requestFullscreen();
+        // Tentar forçar landscape no Android
+        if (screen.orientation && (screen.orientation as any).lock) {
+          (screen.orientation as any).lock('landscape').catch((e: any) => {
+            console.warn('Erro ao travar orientação:', e);
+          });
+        }
+      }
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen();
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      // Destravar orientação ao sair
+      if (screen.orientation && (screen.orientation as any).unlock) {
+        (screen.orientation as any).unlock();
+      }
       setIsFullscreen(false);
     }
   };
@@ -433,7 +451,7 @@ export default function PlayerPage() {
           className="w-full h-full object-contain"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          onClick={togglePlay}
+          onClick={() => setShowControls(!showControls)}
           onWaiting={handleWaiting}
           onCanPlay={handleCanPlay}
           onPlay={() => setIsPlaying(true)}
@@ -474,11 +492,14 @@ export default function PlayerPage() {
               initial={{ y: -50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -50, opacity: 0 }}
-              className="absolute top-0 left-0 right-0 p-6 pointer-events-auto"
+              className="absolute top-0 left-0 right-0 p-6 pointer-events-auto z-20"
             >
               <div className="flex items-center gap-4">
                 <button
-                  onClick={() => router.back()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.back();
+                  }}
                   className="p-2 rounded-lg bg-black/40 backdrop-blur-sm hover:bg-black/60 border border-white/10 text-white transition-all duration-200"
                 >
                   <ArrowLeft className="h-6 w-6" />
@@ -496,10 +517,9 @@ export default function PlayerPage() {
               </div>
             </motion.div>
 
-            {/* Play/Pause center overlay */}
+            {/* Play/Pause center overlay - Agora só o botão clica */}
             <div
-              className="absolute inset-0 flex items-center justify-center pointer-events-auto"
-              onClick={togglePlay}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
             >
               <AnimatePresence>
                 {!isPlaying && (
@@ -508,7 +528,8 @@ export default function PlayerPage() {
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-md border-2 border-white/30 flex items-center justify-center cursor-pointer hover:bg-white/20 hover:border-white/50 transition-all duration-200"
+                    className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-md border-2 border-white/30 flex items-center justify-center cursor-pointer hover:bg-white/20 hover:border-white/50 transition-all duration-200 pointer-events-auto"
+                    onClick={togglePlay}
                   >
                     <Play className="h-12 w-12 text-white fill-current ml-2" />
                   </motion.div>
@@ -521,7 +542,7 @@ export default function PlayerPage() {
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
-              className="absolute bottom-0 left-0 right-0 p-6 space-y-4 pointer-events-auto"
+              className="absolute bottom-0 left-0 right-0 p-6 space-y-4 pointer-events-auto z-20"
             >
               {/* Progress bar */}
               <div className="flex items-center gap-3">

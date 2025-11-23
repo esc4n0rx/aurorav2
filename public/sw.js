@@ -1,14 +1,10 @@
-// ============================================
-// AURORA PWA - Service Worker com Versionamento
-// ============================================
-const APP_VERSION = '1.1.6';
-// ============================================
+
+const APP_VERSION = '1.1.1';
 
 const CACHE_NAME = `aurora-cache-v${APP_VERSION}`;
 const STATIC_CACHE = `aurora-static-v${APP_VERSION}`;
 const DYNAMIC_CACHE = `aurora-dynamic-v${APP_VERSION}`;
 
-// Recursos estáticos para cache inicial
 const STATIC_ASSETS = [
   '/',
   '/login',
@@ -16,14 +12,12 @@ const STATIC_ASSETS = [
   '/manifest.json',
 ];
 
-// Recursos que devem sempre buscar da rede (network-first)
 const NETWORK_FIRST_PATTERNS = [
   '/api/',
   'supabase',
   'firebase',
 ];
 
-// Install event - Cacheia recursos estáticos
 self.addEventListener('install', (event) => {
   console.log(`[SW] Instalando versão ${APP_VERSION}`);
 
@@ -34,13 +28,11 @@ self.addEventListener('install', (event) => {
         return cache.addAll(STATIC_ASSETS);
       })
       .then(() => {
-        // Força ativação imediata da nova versão
         return self.skipWaiting();
       })
   );
 });
 
-// Activate event - Limpa caches antigos
 self.addEventListener('activate', (event) => {
   console.log(`[SW] Ativando versão ${APP_VERSION}`);
 
@@ -49,7 +41,6 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            // Remove caches que não correspondem à versão atual
             if (cacheName.startsWith('aurora-') &&
               cacheName !== STATIC_CACHE &&
               cacheName !== DYNAMIC_CACHE) {
@@ -60,11 +51,9 @@ self.addEventListener('activate', (event) => {
         );
       })
       .then(() => {
-        // Toma controle de todas as páginas imediatamente
         return self.clients.claim();
       })
       .then(() => {
-        // Notifica todos os clientes sobre a atualização
         return self.clients.matchAll().then((clients) => {
           clients.forEach((client) => {
             client.postMessage({
@@ -77,22 +66,18 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - Estratégia de cache inteligente
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Ignora requests não-GET
   if (request.method !== 'GET') {
     return;
   }
 
-  // Ignora extensões do Chrome e outros protocolos
   if (!url.protocol.startsWith('http')) {
     return;
   }
 
-  // Network-first para APIs e recursos dinâmicos
   const isNetworkFirst = NETWORK_FIRST_PATTERNS.some(pattern =>
     request.url.includes(pattern)
   );
@@ -102,17 +87,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first para recursos estáticos
   event.respondWith(cacheFirst(request));
 });
 
-// Estratégia Cache-First (para recursos estáticos)
 async function cacheFirst(request) {
   try {
     const cachedResponse = await caches.match(request);
 
     if (cachedResponse) {
-      // Atualiza cache em background (stale-while-revalidate)
       fetchAndCache(request);
       return cachedResponse;
     }
@@ -123,8 +105,6 @@ async function cacheFirst(request) {
     return await caches.match('/');
   }
 }
-
-// Estratégia Network-First (para APIs)
 async function networkFirst(request) {
   try {
     const networkResponse = await fetch(request);
@@ -141,17 +121,14 @@ async function networkFirst(request) {
   }
 }
 
-// Busca e cacheia recurso
 async function fetchAndCache(request) {
   try {
     const response = await fetch(request);
 
-    // Só cacheia respostas válidas
     if (!response || response.status !== 200) {
       return response;
     }
 
-    // Não cacheia respostas opacas de CDNs
     if (response.type === 'opaque') {
       return response;
     }
@@ -168,7 +145,6 @@ async function fetchAndCache(request) {
   }
 }
 
-// Message event - Comunicação com o cliente
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     console.log('[SW] Recebido comando para atualizar');
@@ -195,7 +171,6 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Push notification event (para futuras notificações)
 self.addEventListener('push', (event) => {
   if (event.data) {
     const data = event.data.json();
@@ -215,7 +190,6 @@ self.addEventListener('push', (event) => {
   }
 });
 
-// Notification click event
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
